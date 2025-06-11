@@ -335,13 +335,17 @@ async function runJestTests(folder: vscode.WorkspaceFolder, config: any) {
   // Get absolute path to Jest in the workspace root
   const jestPath = path.join(folder.uri.fsPath, "node_modules", ".bin", "jest");
 
-  const terminal = vscode.window.createTerminal("Jest Tests");
+  // Create a terminal with specific shell path to avoid interactive prompts
+  const terminal = vscode.window.createTerminal({
+    name: "Jest Tests",
+    shellPath: "/bin/bash", // Use bash directly instead of zsh
+    cwd: resolvedConfig.cwd,
+  });
+
   terminal.sendText(
-    `cd ${
-      resolvedConfig.cwd
-    } && NODE_ENV=test node --dns-result-order=ipv4first ${jestPath} ${resolvedConfig.args.join(
-      " "
-    )}`
+    `NODE_ENV=test node --dns-result-order=ipv4first "${jestPath}" ${resolvedConfig.args
+      .map((arg: string) => `"${arg}"`)
+      .join(" ")}`
   );
   terminal.show();
 }
