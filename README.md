@@ -7,6 +7,31 @@ This extension provides advanced Jest debugging configuration capabilities for V
 - Automatically configures Jest debugging sessions
 - Supports multiple Jest configurations through pattern matching
 - Runs tests in debug mode with proper source maps
+- Context menu integration for test files:
+  - **Run Jest Tests In Current File**: Runs the tests in the current file using your Jest configuration
+  - **Debug Jest Tests In Current File**: Starts a debugging session for tests in the current file
+
+## Usage
+
+### Context Menu Options
+
+When you right-click on a test file (files matching `*.test.ts`, `*.spec.ts`, etc.), you'll see two options:
+
+![Context menu showing Jest test run and debug options](docs/images/context-menu.png)
+
+1. **Run Jest Tests In Current File**
+
+   - Executes the tests without attaching the debugger
+   - Uses your Jest configuration from launch.json
+   - Shows test output in an integrated terminal
+
+2. **Debug Jest Tests In Current File**
+
+   - Starts a debugging session for the tests
+   - Allows setting breakpoints and stepping through code
+   - Uses your Jest configuration from launch.json
+
+If you have multiple Jest configurations in your launch.json, the extension will prompt you to choose which configuration to use.
 
 ## Configuration
 

@@ -22,6 +22,30 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "jest-debug.debug",
+        "title": "Debug Jest Tests In Current File"
+      },
+      {
+        "command": "jest-debug.run",
+        "title": "Run Jest Tests In Current File"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "jest-debug.debug",
+          "when": "resourceFilename =~ /.*\\.(test|spec)s?(\\.[a-z]+\\.ts|\\.ts)$/",
+          "group": "navigation"
+        },
+        {
+          "command": "jest-debug.run",
+          "when": "resourceFilename =~ /.*\\.(test|spec)s?(\\.[a-z]+\\.ts|\\.ts)$/",
+          "group": "navigation"
+        }
+      ]
+    },
     "breakpoints": [
       {
         "language": "javascript"

@@ -21,6 +21,7 @@ type RequiredConfigKeys = {
   program: string;
   console: "integratedTerminal";
   internalConsoleOptions: "neverOpen";
+  runtimeArgs: string[];
 };
 
 const REQUIRED_CONFIG_KEYS: RequiredConfigKeys = {
@@ -29,6 +30,7 @@ const REQUIRED_CONFIG_KEYS: RequiredConfigKeys = {
   program: "${workspaceFolder}/node_modules/.bin/jest",
   console: "integratedTerminal",
   internalConsoleOptions: "neverOpen",
+  runtimeArgs: ["--dns-result-order=ipv4first"],
 } as const;
 
 function checkNodeVersion(workspaceFolder: string): void {
@@ -253,11 +255,117 @@ class JestDebugConfigProvider implements vscode.DebugConfigurationProvider {
   }
 }
 
+async function getJestConfig(): Promise<
+  { folder: vscode.WorkspaceFolder; config: any } | undefined
+> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showErrorMessage("No active editor found");
+    return;
+  }
+
+  const folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+  if (!folder) {
+    vscode.window.showErrorMessage("No workspace folder found");
+    return;
+  }
+
+  // Get all launch configurations
+  const launchConfigs = vscode.workspace.getConfiguration("launch", folder);
+  const configs = launchConfigs.get<any[]>("configurations") || [];
+
+  // Find all Jest debug configurations
+  const jestConfigs = configs.filter(
+    (config) =>
+      config.type === "node" &&
+      config.defaultJestConfigPath &&
+      config.defaultCwd
+  );
+
+  if (jestConfigs.length === 0) {
+    vscode.window.showErrorMessage(
+      "No Jest debug configurations found in launch.json. Please add at least one with defaultJestConfigPath and defaultCwd."
+    );
+    return;
+  }
+
+  let selectedConfig: any;
+  if (jestConfigs.length === 1) {
+    selectedConfig = jestConfigs[0];
+  } else {
+    const selected = await vscode.window.showQuickPick(
+      jestConfigs.map((config) => ({
+        label: config.name,
+        description: `Config: ${config.defaultJestConfigPath}`,
+        detail: `Working Dir: ${config.defaultCwd}`,
+        config,
+      })),
+      {
+        placeHolder: "Select Jest Configuration",
+        title: "Multiple Jest Configurations Found",
+      }
+    );
+    if (!selected) {
+      return; // User cancelled
+    }
+    selectedConfig = selected.config;
+  }
+
+  return { folder, config: selectedConfig };
+}
+
+async function runJestTests(folder: vscode.WorkspaceFolder, config: any) {
+  const debugProvider = new JestDebugConfigProvider();
+  const resolvedConfig = debugProvider.resolveDebugConfiguration(
+    folder,
+    config,
+    new vscode.CancellationTokenSource().token
+  );
+
+  if (!resolvedConfig) {
+    return;
+  }
+
+  // Get absolute path to Jest in the workspace root
+  const jestPath = path.join(folder.uri.fsPath, "node_modules", ".bin", "jest");
+
+  const terminal = vscode.window.createTerminal("Jest Tests");
+  terminal.sendText(
+    `cd ${
+      resolvedConfig.cwd
+    } && NODE_ENV=test node --dns-result-order=ipv4first ${jestPath} ${resolvedConfig.args.join(
+      " "
+    )}`
+  );
+  terminal.show();
+}
+
+async function startJestSession(debug: boolean = true) {
+  const result = await getJestConfig();
+  if (!result) {
+    return;
+  }
+
+  const { folder, config } = result;
+
+  if (debug) {
+    await vscode.debug.startDebugging(folder, config);
+  } else {
+    await runJestTests(folder, config);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.debug.registerDebugConfigurationProvider(
       "node",
       new JestDebugConfigProvider()
+    ),
+    vscode.commands.registerCommand("jest-debug.debug", () =>
+      startJestSession(true)
+    ),
+    vscode.commands.registerCommand("jest-debug.run", () =>
+      startJestSession(false)
     )
   );
 }
