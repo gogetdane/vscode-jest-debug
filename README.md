@@ -37,8 +37,11 @@ If you have multiple Jest configurations in your launch.json, the extension will
 
 The extension supports both global configuration and pattern-based configuration through the launch.json file. Here's a detailed breakdown of the configuration options:
 
-### Global Settings
+### Required Configuration Fields
 
+To mark a launch configuration for Jest debugging, you must include:
+
+- `isJestDebugConfig`: Set to `true` to indicate this configuration should be handled by the Jest debugger
 - `defaultJestConfigPath` (required): Default path to the Jest configuration file when no pattern matches are found
 - `defaultCwd` (required): Default working directory for Jest when no pattern matches are found
 
@@ -54,50 +57,63 @@ The `jestConfigMap` array allows you to specify different Jest configurations ba
 
 ```json
 {
-  "type": "node",
-  "request": "launch",
-  "name": "Jest: current file",
-  "console": "integratedTerminal",
-  "args": ["--runInBand"],
-  "defaultJestConfigPath": "${workspaceFolder}/src/jest.config.js",
-  "defaultCwd": "${workspaceFolder}/src",
-  "jestConfigMap": [
+  "version": "0.2.0",
+  "configurations": [
     {
-      "pattern": ".*packages\\/my-client\\/.*\\.tests?\\.ts",
-      "config": "${workspaceFolder}/packages/my-client/jest.config.js",
-      "cwd": "${workspaceFolder}/packages/my-client"
+      "type": "node",
+      "request": "launch",
+      "name": "Jest: current file",
+      "isJestDebugConfig": true,
+      "console": "integratedTerminal",
+      "args": ["--runInBand"],
+      "defaultJestConfigPath": "${workspaceFolder}/src/jest.config.js",
+      "defaultCwd": "${workspaceFolder}/src",
+      "jestConfigMap": [
+        {
+          "pattern": ".*packages\\/my-client\\/.*\\.tests?\\.ts",
+          "config": "${workspaceFolder}/packages/my-client/jest.config.js",
+          "cwd": "${workspaceFolder}/packages/my-client"
+        },
+        {
+          "pattern": ".*packages\\/classifiers\\/.*\\.tests?\\.ts",
+          "config": "${workspaceFolder}/packages/classifiers/jest.config.js",
+          "cwd": "${workspaceFolder}/packages/classifiers"
+        },
+        {
+          "pattern": ".*packages\\/amazing-engine\\/.*\\.tests?\\.ts",
+          "config": "${workspaceFolder}/packages/amazing-engine/jest.config.js",
+          "cwd": "${workspaceFolder}/packages/amazing-engine"
+        },
+        // These match in order of precedence here, i.e. integration tests in the awesome-tool directory will match here..
+        {
+          "pattern": ".*packages\\/awesome-tool\\/.*\\.tests?\\.integration\\.ts",
+          "config": "${workspaceFolder}/packages/awesome-tool/jest.config.integration.js",
+          "cwd": "${workspaceFolder}/packages/awesome-tool"
+        },
+        // .. and other integration tests will match here
+        {
+          "pattern": ".*\\.tests?\\.integration\\.ts",
+          "config": "${workspaceFolder}/src/jest.config.integration.js",
+          "cwd": "${workspaceFolder}/src"
+        },
+        {
+          "pattern": ".*\\.tests?\\.repo\\.ts",
+          "config": "${workspaceFolder}/src/jest.config.repo.js",
+          "cwd": "${workspaceFolder}/src"
+        },
+        {
+          "pattern": ".*\\.tests?\\.snapshot\\.ts",
+          "config": "${workspaceFolder}/src/jest.config.snapshots.js",
+          "cwd": "${workspaceFolder}/src"
+        }
+      ]
     },
     {
-      "pattern": ".*packages\\/classifiers\\/.*\\.tests?\\.ts",
-      "config": "${workspaceFolder}/packages/classifiers/jest.config.js",
-      "cwd": "${workspaceFolder}/packages/classifiers"
-    },
-    {
-      "pattern": ".*packages\\/amazing-engine\\/.*\\.tests?\\.ts",
-      "config": "${workspaceFolder}/packages/amazing-engine/jest.config.js",
-      "cwd": "${workspaceFolder}/packages/amazing-engine"
-    },
-    // These match in order of precedence here, i.e. integration tests in the awesome-tool directory will match here..
-    {
-      "pattern": ".*packages\\/awesome-tool\\/.*\\.tests?\\.integration\\.ts",
-      "config": "${workspaceFolder}/packages/awesome-tool/jest.config.integration.js",
-      "cwd": "${workspaceFolder}/packages/awesome-tool"
-    },
-    // .. and other integration tests will match here
-    {
-      "pattern": ".*\\.tests?\\.integration\\.ts",
-      "config": "${workspaceFolder}/src/jest.config.integration.js",
-      "cwd": "${workspaceFolder}/src"
-    },
-    {
-      "pattern": ".*\\.tests?\\.repo\\.ts",
-      "config": "${workspaceFolder}/src/jest.config.repo.js",
-      "cwd": "${workspaceFolder}/src"
-    },
-    {
-      "pattern": ".*\\.tests?\\.snapshot\\.ts",
-      "config": "${workspaceFolder}/src/jest.config.snapshots.js",
-      "cwd": "${workspaceFolder}/src"
+      "type": "node",
+      "request": "launch",
+      "name": "Other Node.js Debug Config"
+      // This configuration will not be affected by the Jest debugger
+      // since isJestDebugConfig is not set to true
     }
   ]
 }

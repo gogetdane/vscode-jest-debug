@@ -67,6 +67,11 @@
               "defaultCwd"
             ],
             "properties": {
+              "isJestDebugConfig": {
+                "type": "boolean",
+                "description": "Set to true to indicate this configuration should be handled by the Jest debugger",
+                "default": false
+              },
               "defaultJestConfigPath": {
                 "type": "string",
                 "description": "Path to Jest configuration file"

@@ -13,6 +13,7 @@ interface JestDebugConfiguration extends vscode.DebugConfiguration {
   defaultJestConfigPath: string;
   defaultCwd: string;
   jestConfigMap?: JestConfigMapEntry[];
+  isJestDebugConfig?: boolean;
 }
 
 type RequiredConfigKeys = {
@@ -161,6 +162,10 @@ class JestDebugConfigProvider implements vscode.DebugConfigurationProvider {
     config: JestDebugConfiguration,
     _token: vscode.CancellationToken
   ): vscode.DebugConfiguration | undefined {
+    if (!config.isJestDebugConfig) {
+      return config;
+    }
+
     if (!this.validateConfig(config)) {
       return undefined;
     }
@@ -278,6 +283,7 @@ async function getJestConfig(): Promise<
   const jestConfigs = configs.filter(
     (config) =>
       config.type === "node" &&
+      config.isJestDebugConfig &&
       config.defaultJestConfigPath &&
       config.defaultCwd
   );
